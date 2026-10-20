@@ -16,7 +16,7 @@ button:active{transform:translateY(3px);box-shadow:none}button:disabled{opacity:
 #pad{position:fixed;left:14px;bottom:max(20px,env(safe-area-inset-bottom));width:174px;height:174px;display:grid;grid-template:repeat(3,58px)/repeat(3,58px)}
 #pad button{padding:0;min-height:0;font-size:22px;background:#f6ecd6;opacity:.93}
 #acts{position:fixed;right:12px;bottom:max(20px,env(safe-area-inset-bottom));width:112px;display:flex;flex-direction:column;gap:8px}
-#hint{position:fixed;left:8px;right:8px;bottom:calc(max(20px,env(safe-area-inset-bottom)) + 184px);text-align:center;pointer-events:none}
+#hint{position:fixed;left:8px;right:132px;bottom:calc(max(20px,env(safe-area-inset-bottom)) + 184px);pointer-events:none}
 #hint span{display:inline-block;padding:4px 10px}
 #toast{position:fixed;top:92px;left:50%;transform:translateX(-50%);max-width:90%;padding:8px 12px;text-align:center;display:none;pointer-events:none}
 #toast.on{display:block}
@@ -29,14 +29,14 @@ button:active{transform:translateY(3px);box-shadow:none}button:disabled{opacity:
 .logo{font-size:44px;line-height:1;text-align:center;color:#c76f7e;text-shadow:3px 3px 0 #8a6144;margin:8px 0 12px;letter-spacing:2px}
 .l{font-size:13px;border-left:3px solid #e6a9b4;padding-left:8px}
 canvas#pv{display:block;margin:6px auto;width:128px;height:128px;image-rendering:pixelated;border:3px solid #8a6144}
-.sws{display:flex;gap:8px;justify-content:center}.sws i{width:42px;height:42px;border:3px solid #8a6144;border-radius:4px}.sws i.on{outline:3px solid #c76f7e}
+.sws{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}.sws i.t{width:auto;padding:9px 10px;font-style:normal;background:#f6ecd6}#xb{width:56px;height:10px;border:2px solid #8a6144;background:#e3d2b0}#xp{display:block;height:100%;width:0;background:#7fae7a}.sws i{width:42px;height:42px;border:3px solid #8a6144;border-radius:4px}.sws i.on{outline:3px solid #c76f7e}
 input[type=range]{width:100%;height:36px}
 body.title #hud,body.title #pad,body.title #acts,body.title #hint{display:none}
 </style></head><body class="title">
 <canvas id="cv"></canvas>
-<div id="hud"><div class="px"><img class="ic" id="i1" alt=""><b id="co">0</b></div><div class="px"><img class="ic" id="i2" alt=""><b id="sd">0</b></div><div class="px"><img class="ic" id="i3" alt=""><b id="cr">0</b></div><button id="menu">Menu</button><div class="px" id="tm"></div></div>
+<div id="hud"><div class="px"><img class="ic" id="i1" alt=""><b id="co">0</b></div><div class="px">Lv <b id="lv">1</b><div id="xb"><i id="xp"></i></div></div><button id="menu">Menu</button><div class="px" id="tm"></div></div>
 <div id="hint"><span class="px" id="ht"></span></div><div id="toast" class="px"></div>
 <div id="pad"><button data-k="u" style="grid-area:1/2">&#9650;</button><button data-k="l" style="grid-area:2/1">&#9664;</button><button data-k="r" style="grid-area:2/3">&#9654;</button><button data-k="d" style="grid-area:3/2">&#9660;</button></div>
-<div id="acts"><button id="bm" style="display:none;background:#f2d27a">Market</button><button id="bp">Plant</button><button id="bw" style="background:#a9d0e0">Water</button><button id="bh" style="background:#b9d9a0">Pick</button></div>
+<div id="acts"><button id="bm" style="display:none;background:#f2d27a">Market</button><button id="bs" style="background:#f6ecd6;font-size:13px;padding:4px">Seed</button><button id="bp">Plant</button><button id="bw" style="background:#a9d0e0">Water</button><button id="bh" style="background:#b9d9a0">Pick</button></div>
 <div id="ov"></div>
 <script src="game.js"></script></body></html>
