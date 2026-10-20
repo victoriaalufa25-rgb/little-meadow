@@ -1,22 +1,26 @@
 (function(){'use strict';
 /* ===== LOGIC (no DOM, testable) ===== */
-const T=16,MW=22,MH=20,DAY=150,WET=45,KEY='little-meadow-save-2';
-const PLOTS=[[7,10],[9,10],[11,10],[7,12],[9,12],[11,12]],LANDC=[0,20,40,70,110,160];
+const T=16,MW=24,MH=22,DAY=150,WET=45,KEY='little-meadow-save-2';
+const PLOTS=[[7,10],[9,10],[11,10],[13,10],[7,12],[9,12],[11,12],[13,12],[7,14],[9,14],[11,14],[13,14]],LANDC=[0,20,40,70,110,160,220,290,370,460,560,670];
 const CROPS={carrot:{n:'Carrot',lv:1,cost:3,need:60,sell:6,xp:5,c:'#ec8c3c'},tomato:{n:'Tomato',lv:2,cost:6,need:80,sell:12,xp:8,c:'#d9534f'},pepper:{n:'Pepper',lv:3,cost:9,need:100,sell:18,xp:11,c:'#c0392b'},maize:{n:'Maize',lv:4,cost:14,need:130,sell:28,xp:15,c:'#f2d27a'},mango:{n:'Mango tree',lv:5,cost:60,need:200,sell:30,xp:25,c:'#f2a93c',tree:1}};
 const P={skin:['#f8dcc0','#f3d2b3','#d9a577','#a8734e','#6e4630'],hair:['#5c3f2b','#2b2020','#d9a441','#c4574a','#e6a9b4','#e8e0d0'],top:['#e6a9b4','#8fb8c9','#f2d27a','#a98fd0','#7fae7a','#f6ecd6'],pants:['#8a6144','#5b7aa0','#4f4a5e','#7a9a6a']};
-const QUESTS=[['planted','First Seeds','Plant a seed in your garden plot.'],['watered','Thirsty Sprouts','Water your planted seed.'],['harvested','First Harvest','Keep it watered, then pick the ripe crop.'],['sold','Little Market','Sell a crop at Mama Ada\'s stall.']];
+const QUESTS=[['planted','First Seeds','Plant a seed in your garden plot.'],['watered','Thirsty Sprouts','Water your planted seed.'],['harvested','First Harvest','Keep it watered, then pick the ripe crop.'],['sold','Little Market','Sell a crop at Mama Ada\'s stall.'],['filled','Order Up','Deliver an order from the order board.']];
+const NAMES=['Mama Ada','Baba Tunde','Aunty Ngozi','Chief Emeka','Little Sade','Mama Bisi'];
+function genOrder(S){const ks=Object.keys(CROPS).filter(k=>CROPS[k].lv<=S.lv);if(!ks.length)ks.push('carrot');const items={};let v=0,q=0;
+ for(let j=0;j<(ks.length>1&&Math.random()<.5?2:1);j++){const k=ks[Math.floor(Math.random()*ks.length)],n=1+Math.floor(Math.random()*(2+Math.min(6,S.lv/2)));if(!items[k]){items[k]=n;v+=n*CROPS[k].sell;q+=n}}
+ return{who:NAMES[Math.floor(Math.random()*NAMES.length)],items,coins:Math.round(v*1.4)+3,xp:q*3+5}}
 const EV=[],xpNeed=l=>30+(l-1)*25,ripe=p=>p.g>=CROPS[p.k].need;
 const stage=p=>{const f=p.g/CROPS[p.k].need;return f<.15?0:f<.45?1:f<1?2:3};
-const TP=[['plant','Plant','seeds'],['water','Water','plants'],['harvest','Harvest','crops'],['sell','Sell','crops']];
-const genDQ=S=>{const l=[];for(let i=0;i<3;i++){const[k,v,w]=TP[(S.day+i)%4],n=2+Math.floor(S.lv/2)+(k==='water'?1:0);l.push({k,n,have:0,done:0,t:v+' '+n+' '+w,coins:6+n*2,xp:8+n*2})}return l};
+const TP=[['plant','Plant','seeds'],['water','Water','plants'],['harvest','Harvest','crops'],['sell','Sell','crops'],['order','Fill','orders']];
+const genDQ=S=>{const l=[];for(let i=0;i<3;i++){const[k,v,w]=TP[(S.day+i)%5],n=k==='order'?1+Math.floor(S.lv/4):2+Math.floor(S.lv/2)+(k==='water'?1:0);l.push({k,n,have:0,done:0,t:v+' '+n+' '+w,coins:6+n*2,xp:8+n*2})}return l};
 const ensure=S=>{if(!S.dq||S.dq.day!==S.day)S.dq={day:S.day,list:genDQ(S)};return S};
-const newState=look=>ensure({v:2,x:9*T,y:6*T+8,dir:'d',coins:10,xp:0,lv:1,land:1,seed:'carrot',inv:{carrot:3},crops:{},plots:PLOTS.map(()=>null),day:1,t:.15,
- q:{planted:0,watered:0,harvested:0,sold:0},qd:[],dq:null,log:['Day 1: I arrived at Little Meadow. Time to start a garden.'],look:look||{skin:1,hs:0,hair:0,os:0,top:0,pants:0,hat:0},set:{sfx:1,mus:1,vol:.6},savedAt:0});
+const newState=look=>{const s=ensure({v:2,x:9*T,y:6*T+8,dir:'d',coins:10,xp:0,lv:1,land:1,seed:'carrot',inv:{carrot:3},crops:{},plots:PLOTS.map(()=>null),day:1,t:.15,
+ q:{planted:0,watered:0,harvested:0,sold:0},qd:[],dq:null,log:['Day 1: I arrived at Little Meadow. Time to start a garden.'],look:look||{skin:1,hs:0,hair:0,os:0,top:0,pants:0,hat:0},set:{sfx:1,mus:1,vol:.6},savedAt:0});s.orders=[0,1,2,3].map(()=>genOrder(s));return s};
 const num=Number.isFinite,obj=o=>o&&typeof o==='object';
-const valid=s=>!!(s&&s.v===2&&num(s.x)&&num(s.y)&&num(s.coins)&&num(s.day)&&num(s.t)&&num(s.xp)&&num(s.lv)&&s.lv>=1&&num(s.land)&&s.land>=1&&s.land<=PLOTS.length&&CROPS[s.seed]&&obj(s.inv)&&obj(s.crops)&&Array.isArray(s.plots)&&s.plots.length===PLOTS.length&&s.plots.every(p=>p===null||(obj(p)&&CROPS[p.k]&&num(p.g)&&num(p.w)))&&obj(s.q)&&Array.isArray(s.qd)&&Array.isArray(s.log)&&obj(s.dq)&&Array.isArray(s.dq.list)&&obj(s.look)&&obj(s.set));
+const valid=s=>!!(s&&s.v===2&&num(s.x)&&num(s.y)&&num(s.coins)&&num(s.day)&&num(s.t)&&num(s.xp)&&num(s.lv)&&s.lv>=1&&num(s.land)&&s.land>=1&&s.land<=PLOTS.length&&CROPS[s.seed]&&obj(s.inv)&&obj(s.crops)&&Array.isArray(s.plots)&&s.plots.length===PLOTS.length&&s.plots.every(p=>p===null||(obj(p)&&CROPS[p.k]&&num(p.g)&&num(p.w)))&&obj(s.q)&&Array.isArray(s.qd)&&Array.isArray(s.log)&&obj(s.dq)&&Array.isArray(s.dq.list)&&obj(s.look)&&obj(s.set)&&Array.isArray(s.orders)&&s.orders.length===4&&s.orders.every(o=>obj(o)&&obj(o.items)&&num(o.coins)&&num(o.xp)));
 function gain(S,n){S.xp+=n;while(S.xp>=xpNeed(S.lv)){S.xp-=xpNeed(S.lv);S.lv++;const u=Object.values(CROPS).filter(c=>c.lv===S.lv).map(c=>c.n);EV.push('Level up! You are level '+S.lv+(u.length?'. New in shop: '+u.join(', '):''))}}
-const MAP={plant:'planted',water:'watered',harvest:'harvested',sell:'sold'};
-function event(S,k,n){n=n||1;S.q[MAP[k]]+=n;ensure(S);
+const MAP={plant:'planted',water:'watered',harvest:'harvested',sell:'sold',order:'filled'};
+function event(S,k,n){n=n||1;S.q[MAP[k]]=(S.q[MAP[k]]||0)+n;ensure(S);
  for(const d of S.dq.list)if(!d.done&&d.k===k){d.have=Math.min(d.n,d.have+n);if(d.have>=d.n){d.done=1;S.coins+=d.coins;EV.push('Daily quest done: '+d.t+' (+'+d.coins+' coins)');gain(S,d.xp)}}
  for(const[q,t]of QUESTS)if(S.q[q]>=1&&!S.qd.includes(q)){S.qd.push(q);S.coins+=5;S.log.push('Day '+S.day+': Finished "'+t+'".');EV.push('Quest done: '+t+' (+5 coins)');gain(S,10)}}
 const Logic={
@@ -25,6 +29,7 @@ const Logic={
  harvest(S,i){const p=S.plots[i];if(!p||!ripe(p))return'Not ripe yet.';const d=CROPS[p.k];S.crops[p.k]=(S.crops[p.k]||0)+1;if(d.tree)p.g=d.need*.5;else S.plots[i]=null;gain(S,d.xp);event(S,'harvest');return true},
  sell(S){let n=0,v=0;for(const k in S.crops){n+=S.crops[k];v+=S.crops[k]*CROPS[k].sell}if(!n)return'You have nothing to sell.';S.crops={};S.coins+=v;gain(S,n);event(S,'sell',n);return true},
  buy(S,k){const d=CROPS[k];if(!d||d.lv>S.lv)return'Not unlocked yet.';if(S.coins<d.cost)return'Not enough coins.';S.coins-=d.cost;S.inv[k]=(S.inv[k]||0)+1;return true},
+ fill(S,i){const o=S.orders[i];if(!o)return'No order here.';for(const k in o.items)if((S.crops[k]||0)<o.items[k])return'You need more '+CROPS[k].n+'.';for(const k in o.items){S.crops[k]-=o.items[k];if(!S.crops[k])delete S.crops[k]}S.coins+=o.coins;gain(S,o.xp);S.orders[i]=genOrder(S);event(S,'order');return true},
  land(S){if(S.land>=PLOTS.length)return'You own all the land for now.';const c=LANDC[S.land];if(S.coins<c)return'Not enough coins.';S.coins-=c;S.land++;S.log.push('Day '+S.day+': Bought garden plot '+S.land+'.');return true},
  tick(S,dt){for(const p of S.plots)if(p&&p.w>0){const u=Math.min(dt,p.w);p.w-=u;p.g=Math.min(CROPS[p.k].need,p.g+u)}
   S.t+=dt/DAY;while(S.t>=1){S.t-=1;S.day++;S.log.push('Day '+S.day+': A new morning in the meadow.');if(S.log.length>30)S.log.shift();ensure(S);EV.push('A new day! New daily quests.')}}
@@ -50,6 +55,7 @@ const treeT=mk(T,24,x=>{R(x,'rgba(0,0,0,.12)',2,20,12,3);R(x,'#7a5238',6,14,4,8)
 const cot=mk(48,44,x=>{R(x,'rgba(0,0,0,.13)',2,38,46,5);R(x,'#8a6144',34,0,5,8);R(x,'#b95f6e',8,2,32,4);R(x,'#c76f7e',4,6,40,6);R(x,'#d98a98',0,12,48,6);R(x,'#b95f6e',0,18,48,2);R(x,'#f6ecd6',3,20,42,18);R(x,'#e3d2b0',3,34,42,4);R(x,'#8a6144',20,26,9,12);R(x,'#5c3f2b',20,26,9,1);R(x,'#f2d27a',26,32,1,1);
  for(const w of[8,33]){R(x,'#8a6144',w-1,24,10,10);R(x,'#9fcbd9',w,25,8,7);R(x,'#8a6144',w+3,25,1,7);R(x,'#8a6144',w,28,8,1);R(x,'#e6a9b4',w-1,34,10,2)}});
 const crate=mk(T,T,x=>{R(x,'rgba(0,0,0,.13)',1,13,14,3);R(x,'#a5784f',1,6,14,8);R(x,'#8a6144',1,6,14,1);R(x,'#8a6144',1,10,14,1);R(x,'#c99a6b',2,7,12,2);R(x,'#8a6144',7,0,2,6);R(x,'#f6ecd6',3,0,10,5);R(x,'#e6a9b4',7,2,2,2)});
+const board=mk(T,T,x=>{R(x,'rgba(0,0,0,.13)',1,13,14,3);R(x,'#8a6144',2,4,2,10);R(x,'#8a6144',12,4,2,10);R(x,'#a5784f',1,1,14,8);R(x,'#8a6144',1,1,14,1);R(x,'#f6ecd6',3,3,4,4);R(x,'#e6a9b4',9,3,4,3);R(x,'#f2d27a',8,6,4,2)});
 $('i1').src=mk(8,8,x=>{R(x,'#c9972f',2,0,4,8);R(x,'#c9972f',0,2,8,4);R(x,'#f2d27a',2,1,4,6);R(x,'#f2d27a',1,2,6,4)}).toDataURL();
 const VIL={skin:2,hs:1,hair:1,os:2,top:3,pants:0,hat:1};
 function player(c,px,py,dir,fr,mv,L){const sk=P.skin[L.skin],hr=P.hair[L.hair],tp=P.top[L.top],pn=P.pants[L.pants],X=Math.round(px)-8,Y=Math.round(py)-15,B=mv&&fr%2?1:0,lg=L.hs;
@@ -64,9 +70,9 @@ function player(c,px,py,dir,fr,mv,L){const sk=P.skin[L.skin],hr=P.hair[L.hair],t
 let ground,solid,trees=[];
 (function(){solid=new Uint8Array(MW*MH);let sd=7;const rnd=()=>(sd=sd*16807%2147483647)/2147483647;
  for(let i=0;i<MW;i++)trees.push([i,0],[i,MH-1]);for(let j=1;j<MH-1;j++)trees.push([0,j],[MW-1,j]);
- [[17,3],[18,5],[2,12],[16,14],[19,12],[6,16],[13,17],[2,16],[10,4],[19,8]].forEach(t=>trees.push(t));
+ [[17,3],[18,5],[2,12],[16,14],[19,12],[6,16],[13,18],[2,16],[10,4],[19,8],[21,16],[5,19],[17,18],[21,6],[8,19]].forEach(t=>trees.push(t));
  trees.forEach(([a,b])=>solid[b*MW+a]=1);for(let a=3;a<=5;a++)for(let b=2;b<=3;b++)solid[b*MW+a]=1;
- solid[7*MW+15]=1;solid[7*MW+16]=1;PLOTS.forEach(([a,b])=>solid[b*MW+a]=1);trees.sort((p,q)=>p[1]-q[1]);
+ solid[7*MW+12]=1;solid[7*MW+15]=1;solid[7*MW+16]=1;PLOTS.forEach(([a,b])=>solid[b*MW+a]=1);trees.sort((p,q)=>p[1]-q[1]);
  const path=new Set();for(let b=4;b<=8;b++)path.add('4,'+b);for(let a=4;a<=17;a++)path.add(a+',8');
  ground=mk(MW*T,MH*T,x=>{for(let b=0;b<MH;b++)for(let a=0;a<MW;a++){const k=(a*7+b*13)%4;x.drawImage(path.has(a+','+b)?pathT:(!solid[b*MW+a]&&rnd()<.08?flowerT[k]:grassT[k]),a*T,b*T)}})})();
 const sol=(x,y)=>{const a=Math.floor(x/T),b=Math.floor(y/T);return a<0||b<0||a>=MW||b>=MH||solid[b*MW+a]===1};
@@ -77,14 +83,15 @@ const fix=s=>{if(blk(s.x,s.y)){s.x=9*T;s.y=6*T+8}return ensure(s)};
 let S=newState(),SET={sfx:1,mus:1,vol:.6};
 try{Object.assign(SET,JSON.parse(localStorage.getItem('lm-set')||'{}'))}catch(e){}
 S.set=SET;
-let playing=false,paused=true,hasSave=false,corrupt=false,sel=-1,selTap=-1,near=false,anim=0,moving=false,vw=160,vh=240,sc=3,cx=0,cy=0,off='Checking offline files...',toastT=0;
+let playing=false,paused=true,hasSave=false,corrupt=false,sel=-1,selTap=-1,near=false,nearB=false,anim=0,moving=false,vw=160,vh=240,sc=3,cx=0,cy=0,off='Checking offline files...',toastT=0;
 const held={};
 const idb=()=>new Promise((res,rej)=>{const r=indexedDB.open('little-meadow',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
 const idbSet=async(k,v)=>{const d=await idb();return new Promise((res,rej)=>{const t=d.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=res;t.onerror=()=>rej(t.error)})};
 const idbGet=async k=>{const d=await idb();return new Promise((res,rej)=>{const r=d.transaction('kv').objectStore('kv').get(k);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})};
 async function save(){S.savedAt=Date.now();S.set=SET;const j=JSON.stringify(S);try{localStorage.setItem(KEY,j)}catch(e){}try{await idbSet(KEY,j)}catch(e){}}
+function mig(o){if(o&&Array.isArray(o.plots)){while(o.plots.length<PLOTS.length)o.plots.push(null);if(!Array.isArray(o.orders)&&num(o.lv))o.orders=[0,1,2,3].map(()=>genOrder(o))}}
 async function loadSave(){let raw=[];try{raw.push(localStorage.getItem(KEY))}catch(e){}try{raw.push(await idbGet(KEY))}catch(e){}
- raw=raw.filter(Boolean);const ok=[];for(const r of raw){try{const o=JSON.parse(r);if(valid(o))ok.push(o)}catch(e){}}
+ raw=raw.filter(Boolean);const ok=[];for(const r of raw){try{const o=JSON.parse(r);mig(o);if(valid(o))ok.push(o)}catch(e){}}
  ok.sort((a,b)=>b.savedAt-a.savedAt);return{s:ok[0]?fix(ok[0]):null,bad:!ok.length&&raw.length>0}}
 
 /* ===== AUDIO (synthesized) ===== */
@@ -124,9 +131,12 @@ function settings(back){const sv=()=>{try{localStorage.setItem('lm-set',JSON.str
  panel('<h2>Settings</h2><div class="col"><button id="a">Sound effects: '+(SET.sfx?'On':'Off')+'</button><button id="m">Music: '+(SET.mus?'On':'Off')+'</button></div><p class="c">Volume</p><input id="v" type="range" min="0" max="100" value="'+Math.round(SET.vol*100)+'"><div class="col"><button id="er">Erase saved game</button><button id="bk">Back</button></div>');
  $('a').onclick=()=>{SET.sfx^=1;sv();sfx('tap');settings(back)};$('m').onclick=()=>{SET.mus^=1;sv();settings(back)};$('v').oninput=e=>{SET.vol=e.target.value/100;sv()};
  let c=0;$('er').onclick=async e=>{if(!c++){e.target.textContent='Tap again to erase';return}try{localStorage.removeItem(KEY)}catch(x){}try{await idbSet(KEY,'')}catch(x){}hasSave=false;corrupt=false;S=newState();S.set=SET;title()};$('bk').onclick=back}
+function orders(m){panel('<h2>Order Board</h2><p class="c">'+(m||'Deliver crops for bonus coins and XP.')+'</p>'+S.orders.map((o,i)=>{const ok=Object.keys(o.items).every(k=>(S.crops[k]||0)>=o.items[k]);
+  return'<p><b>'+o.who+'</b> wants '+Object.keys(o.items).map(k=>o.items[k]+' '+CROPS[k].n+' (you have '+(S.crops[k]||0)+')').join(', ')+'<br>Reward: '+o.coins+' coins, '+o.xp+' XP</p><div class="col"><button data-o="'+i+'"'+(ok?'':' disabled')+'>Deliver</button></div>'}).join('')+'<div class="col"><button id="ox">Close</button></div>');
+ ov.querySelectorAll('[data-o]').forEach(b=>b.onclick=()=>{const r=Logic.fill(S,+b.dataset.o);if(r===true){save();orders('Delivered! Thank you!')}else{sfx('no');orders(r)}});$('ox').onclick=close}
 function act(k){if(sel<0)return;const r=Logic[k](S,sel);
  if(r===true){sfx({plant:'plant',water:'water',harvest:'pick'}[k]);save()}else{sfx('no');toast(r)}}
-$('bp').onclick=()=>act('plant');$('bw').onclick=()=>act('water');$('bh').onclick=()=>act('harvest');$('bm').onclick=()=>market();$('menu').onclick=pauseMenu;
+$('bp').onclick=()=>act('plant');$('bw').onclick=()=>act('water');$('bh').onclick=()=>act('harvest');$('bm').onclick=()=>market();$('bo').onclick=()=>orders();$('menu').onclick=pauseMenu;
 $('bs').onclick=()=>{const l=unlocked();S.seed=l[(l.indexOf(S.seed)+1)%l.length];sfx('tap')};
 
 /* ===== INPUT ===== */
@@ -138,7 +148,7 @@ const dist=i=>Math.hypot(S.x-(PLOTS[i][0]*T+8),S.y-4-(PLOTS[i][1]*T+8));
 cv.addEventListener('pointerdown',e=>{if(!playing||paused)return;const r=cv.getBoundingClientRect(),wx=(e.clientX-r.left)/r.width*vw+cx,wy=(e.clientY-r.top)/r.height*vh+cy;
  const i=PLOTS.findIndex(([a,b])=>wx>=a*T-2&&wx<a*T+T+2&&wy>=b*T-2&&wy<b*T+T+2);
  if(i>=0){if(i>=S.land)toast('For sale! Buy this plot at the stall ('+LANDC[i]+' coins).');else if(dist(i)<42){selTap=i;sfx('tap')}else toast('Walk closer to that plot.')}
- else if(near&&wx>15*T-2&&wx<17*T+2&&wy>7*T-6&&wy<8*T+2)market()});
+ else if(near&&wx>15*T-2&&wx<17*T+2&&wy>7*T-6&&wy<8*T+2)market();else if(nearB&&wx>12*T-2&&wx<13*T+2&&wy>7*T-2&&wy<8*T+2)orders()});
 
 /* ===== LOOP ===== */
 function fit(){const w=innerWidth,h=innerHeight;sc=Math.max(2,Math.round(w/140));vw=Math.ceil(w/sc);vh=Math.ceil(h/sc);cv.width=vw;cv.height=vh;g.imageSmoothingEnabled=false}
@@ -149,17 +159,17 @@ function update(dt){let dx=(held.r?1:0)-(held.l?1:0),dy=(held.d?1:0)-(held.u?1:0
  Logic.tick(S,dt);
  let best=-1,bd=30;for(let i=0;i<S.land;i++){const d=dist(i);if(d<bd){bd=d;best=i}}
  if(selTap>=0&&selTap<S.land&&dist(selTap)<46)best=selTap;else selTap=-1;sel=best;
- near=Math.hypot(S.x-(16*T),S.y-4-(7*T+8))<34}
+ near=Math.hypot(S.x-(16*T),S.y-4-(7*T+8))<34;nearB=Math.hypot(S.x-(12*T+8),S.y-4-(7*T+8))<34}
 const sT=(e,v)=>{if(e.textContent!==''+v)e.textContent=v},hud={co:$('co'),lv:$('lv'),tm:$('tm'),ht:$('ht'),xp:$('xp'),bs:$('bs')},SN=['Seed','Sprout','Growing','Ripe!'];
 function ui(){const p=sel>=0?S.plots[sel]:null,st=p?stage(p):-1,rp=p&&ripe(p),d=CROPS[S.seed];
- $('bp').disabled=!(sel>=0&&!p);$('bw').disabled=!(p&&!rp);$('bh').disabled=!rp;$('bm').style.display=near?'':'none';
+ $('bp').disabled=!(sel>=0&&!p);$('bw').disabled=!(p&&!rp);$('bh').disabled=!rp;$('bm').style.display=near?'':'none';$('bo').style.display=nearB?'':'none';
  sT(hud.co,S.coins);sT(hud.lv,S.lv);hud.xp.style.width=Math.round(S.xp/xpNeed(S.lv)*100)+'%';sT(hud.bs,d.n+' x'+(S.inv[S.seed]||0));
  const h=(6+S.t*24)%24,hh=Math.floor(h),mm=Math.floor(h%1*6)*10;sT(hud.tm,'Day '+S.day+'  '+(((hh+11)%12)+1)+':'+(mm<10?'0':'')+mm+(hh<12?' AM':' PM'));
- sT(hud.ht,sel<0?(near?'Mama Ada\'s stall nearby':'Walk beside a garden plot'):'Plot '+(sel+1)+': '+(p?CROPS[p.k].n+', '+SN[st]+(st<3?(p.w>0?', watered':', thirsty'):''):'Empty'))}
+ sT(hud.ht,sel<0?(near?'Mama Ada\'s stall nearby':nearB?'Order board nearby':'Walk beside a garden plot'):'Plot '+(sel+1)+': '+(p?CROPS[p.k].n+', '+SN[st]+(st<3?(p.w>0?', watered':', thirsty'):''):'Empty'))}
 function draw(){const WW=MW*T,WH=MH*T;
  cx=vw>=WW?-Math.round((vw-WW)/2):Math.max(0,Math.min(WW-vw,Math.round(S.x-vw/2)));
  cy=vh>=WH?-Math.round((vh-WH)/2):Math.max(0,Math.min(WH-vh,Math.round(S.y-vh/2-8)));
- R(g,'#6f9460',0,0,vw,vh);g.save();g.translate(-cx,-cy);g.drawImage(ground,0,0);g.drawImage(cot,48,26);g.drawImage(crate,15*T,7*T);player(g,16*T+8,8*T-1,'d',0,false,VIL);
+ R(g,'#6f9460',0,0,vw,vh);g.save();g.translate(-cx,-cy);g.drawImage(ground,0,0);g.drawImage(cot,48,26);g.drawImage(crate,15*T,7*T);g.drawImage(board,12*T,7*T);player(g,16*T+8,8*T-1,'d',0,false,VIL);
  const tm=Date.now()/400;
  PLOTS.forEach(([a,b],i)=>{if(i>=S.land){g.drawImage(sign,a*T,b*T);return}const p=S.plots[i];g.drawImage(p&&p.w>0?soilW:soilD,a*T,b*T);if(p){const st=stage(p);g.drawImage(cropT[p.k][st],a*T,b*T);if(st===3)R(g,'#fff6d8',a*T+3+Math.round(Math.sin(tm)*2+2),b*T+2,1,1)}
   if(i===sel){g.globalAlpha=.7+Math.sin(tm*2)*.3;g.strokeStyle='#fff6d8';g.lineWidth=1;g.strokeRect(a*T+.5,b*T+.5,T-1,T-1);for(const[u,v]of[[0,0],[14,0],[0,14],[14,14]])R(g,'#e6a9b4',a*T+u,b*T+v,2,2);g.globalAlpha=1}});
